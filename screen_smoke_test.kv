@@ -1,0 +1,373 @@
+#:kivy 2.1.0
+
+<Screensmoketest>:  
+    name: 'screen_smoke_test'
+    MDBoxLayout:
+        orientation: "vertical"
+
+        # === HEADER LAYOUT (TETAP) ===
+        MDBoxLayout:
+            id: header_layout
+            orientation: "horizontal"
+            padding: 20
+            spacing: 20
+            size_hint_y: 0.2
+            md_bg_color: "#111111"
+                    
+            Image:
+                id: logo
+                source:'assets/images/logo-trb.png'
+                size_hint_x: 0.15
+                allow_stretch: True 
+
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.7
+
+                MDLabel:
+                    id: lb_title            
+                    text: "VEHICLE INSPECTION INTEGRATION MANAGEMENT SYSTEM"
+                    halign: "left"
+                    valign: "middle"
+                    font_style: 'H4'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+                MDLabel:
+                    id: lb_subtitle            
+                    text: "DIESEL SMOKE OPACITY"
+                    halign: "left"
+                    valign: "middle"
+                    font_style: 'H5'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.15
+
+                MDLabel:
+                    id: lb_time
+                    text: "12:34:00"
+                    halign: "center"
+                    valign: "middle"
+                    font_style: 'H6'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+                MDLabel:
+                    id: lb_date
+                    text: "17/08/2024"
+                    halign: "center"
+                    valign: "middle"
+                    font_style: 'H6'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+                MDLabel:
+                    id: lb_operator
+                    text: "Nama Operator"
+                    halign: "center"
+                    valign: "middle"
+                    font_style: 'H6'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+                MDLabel:
+                    id: lb_comm
+                    text: "Com: Tidak Terhubung"
+                    halign: "center"
+                    valign: "middle"
+                    font_style: 'H6'
+                    theme_text_color: "Custom"
+
+# ==========================================================
+        # === AREA TENGAH (PENGUJIAN) - MASUK KE DALAM PEMBUNGKUS UTAMA ===
+        # ==========================================================
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: 0.75 # Bagian terbesar
+            padding: dp(20)
+            spacing: dp(20)
+
+            # --- KIRI: MONITORING REAL-TIME ---
+            MDCard:
+                orientation: "vertical"
+                size_hint_x: 0.6
+                padding: dp(20)
+                md_bg_color: "#FFFFFF"
+                elevation: 0
+                line_color: "#E0E0E0"
+                line_width: 1
+
+                MDBoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(100) # Tinggi ditambah sedikit untuk baris baru
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        MDLabel:
+                            text: f"No Antrian: {app.dt_no_antri}  |  No Polisi: {app.dt_no_pol}"
+                            font_style: "H6"
+                        MDLabel:
+                            text: f"No Uji: {app.dt_no_uji}"
+                            font_style: "H6"
+                        MDLabel:
+                            # Tambahan JBB dan Tahun Pembuatan
+                            text: f"JBB: {app.dt_jbb} kg  |  Thn Buat: {app.dt_thn_buat}"
+                            font_style: "H6"
+                            theme_text_color: "Secondary"
+                    MDLabel:
+                        text: root.status_teks
+                        halign: "right"
+                        bold: True
+                        theme_text_color: "Custom"
+                        text_color: "#4471C4"
+
+                MDSeparator:
+
+                MDLabel:
+                    id: lbl_opasitas  # <--- ID untuk update angka %
+                    text: f"{root.opasitas_saat_ini:.1f}%"
+                    font_style: "H1"
+                    halign: "center"
+                    bold: True
+                    theme_text_color: "Custom"
+                    text_color: "#2CA02C" if root.opasitas_saat_ini < 40 else "#FF2A2A"
+                                
+                MDLabel:
+                    text: "OPASITAS SAAT INI"
+                    halign: "center"
+                    font_style: "H6"
+                    theme_text_color: "Secondary"
+
+                MDLabel:
+                    id: lbl_timer  # <--- ID untuk countdown yang rapi
+                    text: f"{root.countdown_val:.1f} s" if root.countdown_val > 0 else ""
+                    halign: "center"
+                    font_style: "H4"
+                    theme_text_color: "Error"
+                    bold: True
+
+                MDLabel:
+                    text: f"SUHU TABUNG: {root.suhu_saat_ini}°C"
+                    halign: "center"
+                    font_style: "H4"
+                    theme_text_color: "Custom"
+                    text_color: "#2CA02C" if 75 <= root.suhu_saat_ini <= 90 else "#FF2A2A"
+
+            # --- KANAN: RIWAYAT & TOMBOL ---
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.4
+                spacing: dp(10)
+
+                # 1. Card Riwayat (Atas)
+                MDCard:
+                    orientation: "vertical"
+                    padding: dp(15)
+                    md_bg_color: "#FFFFFF"
+                    size_hint_y: 0.4
+                    elevation: 0
+                    radius: [15, ]
+                    line_color: "#E0E0E0"
+                    
+                    MDBoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(30)
+                        
+                        MDLabel:
+                            text: "RIWAYAT PEAK TEST"
+                            halign: "center"
+                            font_style: "H6"
+                            bold: True
+                        
+                        # --- TOMBOL HAPUS YANG HILANG ---
+                        MDIconButton:
+                            icon: "delete-sweep"
+                            theme_text_color: "Custom"
+                            text_color: "#262626"
+                            pos_hint: {"center_y": .5}
+                            on_release: root.delete_last_test()
+
+                    MDSeparator:
+                    
+                    MDLabel:
+                        text: "\n".join([f"Tes {i+1}: {val}%" for i, val in enumerate(root.list_peak)]) if root.list_peak else "Belum ada data"
+                        font_style: "H5"
+                        valign: "top"
+                        theme_text_color: "Secondary"
+
+                # 2. Card Hasil Akhir (Tengah - Yang tadinya aneh)
+                MDCard:
+                    orientation: "vertical"
+                    padding: dp(15)
+                    md_bg_color: "#B9F6CA" if root.hasil_uji == "LULUS" else "#FFD5D5" if root.hasil_uji == "TIDAK LULUS" else "#F5F5F5"
+                    size_hint_y: 0.4
+                    elevation: 0
+                    radius: [15, ]
+                    
+                    MDLabel:
+                        text: "HASIL AKHIR"
+                        halign: "center"
+                        font_style: "H4"
+                        bold: True
+
+                    MDBoxLayout:
+                        orientation: "horizontal"
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            MDLabel:
+                                text: "Koefisien (m-1)"
+                                halign: "center"
+                                font_style: "H5"
+                            MDLabel:
+                                id: lbl_hasil_k
+                                text: "0.00"
+                                halign: "center"
+                                font_style: "H3"
+                                bold: True
+                        MDSeparator:
+                            orientation: "vertical"
+                            width: dp(1)
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            MDLabel:
+                                text: "Rata-rata (%)"
+                                halign: "center"
+                                font_style: "H5"
+                            MDLabel:
+                                id: lbl_hasil_opasitas
+                                text: "0.0 %"
+                                halign: "center"
+                                font_style: "H3"
+                                bold: True
+                    
+                    MDLabel:
+                        text: root.hasil_uji
+                        halign: "center"
+                        font_style: "H4"
+                        bold: True
+                        theme_text_color: "Custom"
+                        text_color: "#1B5E20" if self.text == "LULUS" else "#B71C1C"
+
+                # --- Container Tombol (Paling Bawah di Panel Kanan) ---
+                MDBoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: 0.2
+                    spacing: dp(5)
+                    
+                    MDRaisedButton:
+                        id: btn_start
+                        text: "START TEST"
+                        size_hint_x: 1
+                        md_bg_color: "#2CA02C"
+                        on_release: root.start_testing_sequence()
+                    
+                    MDBoxLayout:
+                        spacing: dp(5)
+                        size_hint_y: 1
+                        MDRaisedButton:
+                            text: "SAVE DATA" # Sebelumnya PURGING
+                            size_hint_x: 0.5
+                            md_bg_color: "#4471C4"
+                            on_release: root.exec_save_diesel() # Fungsi baru untuk simpan SQL
+                        MDRaisedButton:
+                            text: "CALCULATE" # Sebelumnya SAVE DATA
+                            size_hint_x: 0.5
+                            md_bg_color: "#FFC000"
+                            on_release: root.calculate_results() # Hanya hitung di layar
+                    
+                    MDRectangleFlatIconButton:
+                        icon: "arrow-left"
+                        text: "KEMBALI"
+                        size_hint_x: 1
+                        text_color: "#FF2A2A"
+                        line_color: "#FF2A2A"
+                        on_release: root.exec_navigate_main()
+
+        # === FOOTER LAYOUT (TETAP) ===
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: 0.1
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: 20
+                spacing: 20
+                md_bg_color: "#4471C4"
+                size_hint_x: 0.4
+                
+                AsyncImage:
+                    id: img_pemkab
+                    source:'assets/images/logo-sorong.png'
+                    size_hint_x: 0.1
+                    allow_stretch: True  
+
+                AsyncImage:
+                    id: img_dishub
+                    source:'assets/images/logo-dishub.png'
+                    size_hint_x: 0.1
+                    allow_stretch: True  
+
+                MDBoxLayout:
+                    orientation: "vertical"
+                    size_hint_x: 0.8
+
+                    MDLabel:
+                        id: lb_pemkab
+                        text: "PEMERINTAH KABUPATEN SORONG"
+                        halign: "left"
+                        valign: "middle"
+                        theme_text_color: "Custom"
+                        text_color: "#EEEEEE"                     
+                        font_style: 'Subtitle1'
+
+                    MDLabel:
+                        id: lb_dishub
+                        text: "DINAS PERHUBUNGAN"
+                        halign: "left"
+                        valign: "middle"
+                        theme_text_color: "Custom"
+                        text_color: "#EEEEEE"
+                        font_style: 'Subtitle1'
+
+                    MDLabel:
+                        id: lb_unit         
+                        text: "UNIT PELAKSANA UJI BERKALA KENDARAAN BERMOTOR"
+                        halign: "left"
+                        valign: "middle"
+                        theme_text_color: "Custom"
+                        text_color: "#EEEEEE"
+                        font_style: 'Subtitle1'
+
+                    MDLabel:
+                        id: lb_unit_address
+                        text: " Klamasen, Distrik Mariat, Kabupaten Sorong, Papua Barat Daya. 98416"
+                        halign: "left"
+                        valign: "middle"
+                        md_bg_color: "#EEEEEE"
+                        theme_text_color: "Custom"
+                        text_color: "#000000"
+                        font_style: 'Subtitle1'
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: 20
+                spacing: 20
+                md_bg_color: "#FFC000"
+                size_hint_x: 0.6
+
+                MDLabel:            
+                    text: "INFORMASI"
+                    halign: "left"
+                    valign: "middle"
+                    font_style: 'H5'
+
+                MDLabel:
+                    id: lb_info
+                    text: "Standar pengujian sesuai PERATURAN MENTERI LINGKUNGAN HIDUP DAN KEHUTANAN REPUBLIK INDONESIA N0 8 TAHUN 2023"
+                    halign: "left"
+                    valign: "middle"
+                    font_style: 'H6'
