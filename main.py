@@ -52,8 +52,14 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.button import MDRaisedButton
 from kivy.properties import NumericProperty, ListProperty, StringProperty, BooleanProperty
 from kivymd.uix.button import MDFillRoundFlatButton
+import bcrypt 
+
+dt_id_user = 0
+dt_user = ""
+dt_foto_user = ""
 
 colors = {
+
     "Red"   : {"A200": "#FF2A2A","A500": "#FF8080","A700": "#FFD5D5",},
     "Gray"  : {"200": "#CCCCCC","500": "#ECECEC","700": "#F9F9F9",},
     "Blue"  : {"200": "#4471C4","500": "#5885D8","700": "#6C99EC",},
@@ -79,9 +85,9 @@ LB_UNIT = config['app']['LB_UNIT']
 LB_UNIT_ADDRESS = config['app']['LB_UNIT_ADDRESS']
 
 # SQL setting
-DB_HOST = "194.31.53.37"
-DB_USER = "Pndujikir2022!"  
-DB_PASSWORD = "@Kirpnd2022!"
+DB_HOST = "187.77.112.162"
+DB_USER = "Pndujikir2026!"  
+DB_PASSWORD = "@PndKir2026!"
 
 DB_NAME = "pkbpandeglang"
 TB_DATA = "tb_cekident"
@@ -177,41 +183,96 @@ class ScreenLogin(MDScreen):
         except Exception as e:
             toast_msg = f'error Login: {e}'
 
+    # def exec_login(self):
+    #     global mydb, db_users
+    #     global dt_id_user, dt_user, dt_foto_user
+    #     screen_main = self.screen_manager.get_screen('screen_main')
+
+    #     try:
+    #         screen_main.exec_reload_database()
+    #         input_username = self.ids.tx_username.text
+    #         input_password = self.ids.tx_password.text        
+    #         dataBase_password = input_password
+    #         hashed_password = hashlib.md5(dataBase_password.encode())
+    #         mycursor = mydb.cursor()
+    #         mycursor.execute(f"SELECT id_user, nama, username, password, image FROM {TB_USER} WHERE username = '{input_username}' and password = '{hashed_password.hexdigest()}'")
+    #         myresult = mycursor.fetchone()
+    #         db_users = np.array(myresult).T
+            
+    #         if myresult is None:
+    #             toast_msg = f'Gagal Masuk, Nama Pengguna atau Password Salah'
+    #             toast(toast_msg) 
+    #             Logger.warning(f"{self.name}: {toast_msg}") 
+    #         else:
+    #             toast_msg = f'Berhasil Masuk, Selamat Datang {myresult[1]}'
+    #             toast(toast_msg)
+    #             Logger.info(f"{self.name}: {toast_msg}")  
+    #             dt_id_user = myresult[0]
+    #             dt_user = myresult[1]
+    #             dt_foto_user = myresult[4]
+    #             self.ids.tx_username.text = ""
+    #             self.ids.tx_password.text = "" 
+    #             self.screen_manager.current = 'screen_main'
+
+    #     except Exception as e:
+    #         toast_msg = f'Gagal masuk, silahkan isi nama user dan password yang sesuai'
+    #         toast(toast_msg)  
+    #         Logger.error(f"{self.name}: {toast_msg}, {e}")  
+
+# ... di dalam class ScreenLogin ...
+
     def exec_login(self):
-        global mydb, db_users
-        global dt_id_user, dt_user, dt_foto_user
+        # Gunakan global agar ID dan Nama bisa dipakai di layar lain (Saving data)
+        global mydb, dt_id_user, dt_user, dt_foto_user
+        
         screen_main = self.screen_manager.get_screen('screen_main')
+        TB_WEB_USER = "web_users" 
 
         try:
             screen_main.exec_reload_database()
-            input_username = self.ids.tx_username.text
+            input_email = self.ids.tx_username.text
             input_password = self.ids.tx_password.text        
-            dataBase_password = input_password
-            hashed_password = hashlib.md5(dataBase_password.encode())
-            mycursor = mydb.cursor()
-            mycursor.execute(f"SELECT id_user, nama, username, password, image FROM {TB_USER} WHERE username = '{input_username}' and password = '{hashed_password.hexdigest()}'")
-            myresult = mycursor.fetchone()
-            db_users = np.array(myresult).T
             
-            if myresult is None:
-                toast_msg = f'Gagal Masuk, Nama Pengguna atau Password Salah'
-                toast(toast_msg) 
-                Logger.warning(f"{self.name}: {toast_msg}") 
+            mycursor = mydb.cursor()
+            
+            # 1. Ambil ID, Name, dan Password (untuk diverifikasi bcrypt)
+            # Pastikan kolom 'tipe_user' namanya sudah sesuai dengan di DB
+            query = f"SELECT id, name, email, password FROM {TB_WEB_USER} WHERE email = %s AND tipe_user = '2'"
+            
+            mycursor.execute(query, (input_email,))
+            myresult = mycursor.fetchone()
+            
+            if myresult:
+                db_id = myresult[0]
+                db_name = myresult[1]
+                db_hashed_password = myresult[3] 
+
+                # 2. Verifikasi Password
+                import bcrypt # Sebaiknya pindahkan ke baris paling atas file script Anda
+                if bcrypt.checkpw(input_password.encode('utf-8'), db_hashed_password.encode('utf-8')):
+                    
+                    # SIMPAN KE VARIABEL GLOBAL
+                    dt_id_user = db_id    # Ini yang nanti masuk ke 'emission_user'
+                    dt_user = db_name      # Ini yang tampil di Dashboard "Login Sebagai: ..."
+                    dt_foto_user = ""      # Kosong karena kolom 'image' tidak ada
+                    
+                    toast(f"Berhasil Masuk, Selamat Datang {dt_user}")
+                    
+                    # Reset input field
+                    self.ids.tx_username.text = ""
+                    self.ids.tx_password.text = "" 
+                    
+                    # Pindah Layar
+                    self.screen_manager.current = 'screen_main'
+                else:
+                    toast("maaf username dan password tidak sesuai")
             else:
-                toast_msg = f'Berhasil Masuk, Selamat Datang {myresult[1]}'
-                toast(toast_msg)
-                Logger.info(f"{self.name}: {toast_msg}")  
-                dt_id_user = myresult[0]
-                dt_user = myresult[1]
-                dt_foto_user = myresult[4]
-                self.ids.tx_username.text = ""
-                self.ids.tx_password.text = "" 
-                self.screen_manager.current = 'screen_main'
+                # Email tidak ditemukan atau tipe_user bukan '2'
+                toast("maaf username dan password tidak sesuai")
 
         except Exception as e:
-            toast_msg = f'Gagal masuk, silahkan isi nama user dan password yang sesuai'
-            toast(toast_msg)  
-            Logger.error(f"{self.name}: {toast_msg}, {e}")  
+            Logger.error(f"Login Error: {e}")
+            toast("Gagal terhubung ke database")
 
     def exec_navigate_home(self):
         try:
@@ -663,43 +724,40 @@ class Screensmoketest(MDScreen):
         toast("Hasil Kalkulasi Terupdate")
 
     def exec_save_diesel(self):
-        """Menyimpan hasil ke database dengan info User dan Waktu Simpan"""
-        # 1. Validasi awal
+        """Menyimpan hasil ke database"""
         if self.hasil_uji == "-" or self.avg_final_val == 0.0:
             toast("Tekan CALCULATE terlebih dahulu!")
             return
 
-        global mydb, dt_no_antri, dt_id_user # Ambil dt_id_user dari login
+        # Pastikan dt_id_user dipanggil di baris global ini
+        global mydb, dt_no_antri, dt_id_user 
         
         try:
-            # 2. Ambil Waktu Sekarang (Jam:Menit:Detik)
             now = datetime.datetime.now()
-            waktu_simpan = now.strftime("%H:%M:%S") # Format untuk emission_post
+            waktu_simpan = now.strftime("%H:%M:%S") 
             
             cursor = mydb.cursor()
             
-            # 3. Query UPDATE dengan tambahan kolom user dan post
+            # Perhatikan bagian emission_user = %s
             sql = f"""UPDATE {TB_DATA} SET 
-                     emission_smoke_value = %s, 
-                     emission_smoke_flag = %s,
-                     emission_user = %s,
-                     emission_post = %s
-                     WHERE noantrian = %s"""
+                      emission_smoke_value = %s, 
+                      emission_smoke_flag = %s,
+                      emission_user = %s,    # <--- ID Operator masuk ke sini
+                      emission_post = %s
+                      WHERE noantrian = %s"""
             
-            # dt_id_user diambil dari data yang di-set saat proses login sukses
+            # Pastikan urutan variabel di bawah ini sama dengan urutan %s di atas
+            # dt_id_user berada di urutan ke-3
             val = (self.avg_final_val, self.smoke_flag_val, dt_id_user, waktu_simpan, dt_no_antri)
             
             cursor.execute(sql, val)
             mydb.commit()
             
-            toast(f"Data Berhasil Disimpan oleh User ID: {dt_id_user}")
-            
-            # 4. Jalankan Purging & Kembali ke Menu
-            self.manual_purging_start() 
+            toast(f"Data Berhasil Disimpan oleh ID: {dt_id_user}")
             self.exec_navigate_main()
             
         except Exception as e:
-            Logger.error(f"Save Diesel Error (User/Post): {e}")
+            Logger.error(f"Save Error: {e}")
             toast("Gagal menyimpan ke Database!")
 
     def exec_navigate_main(self):
