@@ -97,9 +97,9 @@ TB_BAHAN_BAKAR = "bahanbakar"
 TB_WARNA = "warna"
 TB_DATA_MASTER = "identkendaraan"
 
-FTP_HOST = "194.31.53.37"
+FTP_HOST = "187.117.112.162"
 FTP_USER = "root"
-FTP_PASS = "@D15HUBp2022!"
+FTP_PASS = "@SorongNew2026"
 
 class ScreenHome(MDScreen):
     def __init__(self, **kwargs):
@@ -317,7 +317,7 @@ class ScreenMain(MDScreen):
 
         dt_user = dt_foto_user = dt_no_antri = dt_no_pol = dt_no_uji = dt_sts_uji = dt_nama = ""
         dt_merk = dt_type = dt_jns_kend = dt_jbb = dt_brt_ksg = dt_bhn_bkr = dt_warna = dt_chasis = dt_no_mesin = ""
-        dt_id_user = 1
+        dt_id_user = 0
         dt_dash_pendaftaran = dt_dash_belum_uji = dt_dash_sudah_uji = 0
         
         Clock.schedule_once(self.delayed_init, 1)
