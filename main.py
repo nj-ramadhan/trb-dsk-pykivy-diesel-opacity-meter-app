@@ -589,7 +589,7 @@ class Screensmoketest(MDScreen):
             self.opasitas_saat_ini = float(app.latest_data[3])
         
         # Logika tombol start (Range suhu 10-90 C)
-        if 10 <= self.suhu_saat_ini <= 90:
+        if 0 <= self.suhu_saat_ini <= 0:
             self.ids.btn_start.disabled = False
         else:
             if self.status_teks == "READY":
@@ -734,20 +734,16 @@ class Screensmoketest(MDScreen):
         
         try:
             now = datetime.datetime.now()
-            waktu_simpan = now.strftime("%H:%M:%S") 
-            
+            waktu_simpan = now.strftime("%Y-%m-%d %H:%M:%S")
             cursor = mydb.cursor()
             
-            # Perhatikan bagian emission_user = %s
             sql = f"""UPDATE {TB_DATA} SET 
                       emission_smoke_value = %s, 
                       emission_smoke_flag = %s,
-                      emission_user = %s,    # <--- ID Operator masuk ke sini
+                      emission_user = %s,    
                       emission_post = %s
                       WHERE noantrian = %s"""
-            
-            # Pastikan urutan variabel di bawah ini sama dengan urutan %s di atas
-            # dt_id_user berada di urutan ke-3
+
             val = (self.avg_final_val, self.smoke_flag_val, dt_id_user, waktu_simpan, dt_no_antri)
             
             cursor.execute(sql, val)
