@@ -1,3 +1,4 @@
+fpdf2==2.7.9
 Kivy==2.2.1
 kivymd==1.2.0
 libusb_package==1.0.26.2

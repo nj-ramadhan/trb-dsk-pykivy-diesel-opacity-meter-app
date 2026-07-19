@@ -1,0 +1,507 @@
+#:kivy 2.1.0
+
+<ScreenCalibration>:
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: "#F5F6FA" # Background dasar terang
+
+        # === HEADER LAYOUT ===
+        MDBoxLayout:
+            id: header_layout
+            orientation: "horizontal"
+            padding: 20
+            spacing: 20
+            size_hint_y: 0.2
+            md_bg_color: "#111111"
+                    
+            Image:
+                id: logo
+                source:'assets/images/logo-trb.png'
+                size_hint_x: 0.15
+                allow_stretch: True 
+
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.7
+
+                MDLabel:
+                    id: lb_title            
+                    text: "VEHICLE INSPECTION INTEGRATION MANAGEMENT SYSTEM"
+                    halign: "left"
+                    valign: "middle"
+                    font_style: 'H4'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+                MDLabel:
+                    id: lb_subtitle            
+                    text: "DIESEL SMOKE OPACITY"
+                    halign: "left"
+                    valign: "middle"
+                    font_style: 'H5'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint_x: 0.15
+
+                MDLabel:
+                    id: lb_time
+                    text: "12:34:00"
+                    halign: "center"
+                    valign: "middle"
+                    font_style: 'H6'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+                MDLabel:
+                    id: lb_date
+                    text: "17/08/2024"
+                    halign: "center"
+                    valign: "middle"
+                    font_style: 'H6'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+                MDLabel:
+                    id: lb_operator
+                    text: "Nama Operator"
+                    halign: "center"
+                    valign: "middle"
+                    font_style: 'H6'
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+# ============================================================================
+        # === MAIN CONTENT LAYOUT (FLAT DESIGN & LIGHT THEME) ===
+        # ============================================================================
+        MDBoxLayout:
+            id: main_content
+            orientation: "vertical"
+            size_hint_y: 0.7
+            padding: dp(20)
+            spacing: dp(15)
+
+            # --- TOP: CONNECTION PANEL (FLAT) ---
+            MDCard:
+                size_hint_y: None
+                height: dp(65)
+                md_bg_color: "#FFFFFF"
+                padding: [dp(15), 0, dp(15), 0]
+                spacing: dp(15)
+                elevation: 0               # Hilangkan Shading [cite: 2026-03-09]
+                radius: [10, ]             # Radius halus [cite: 2026-03-09]
+                line_color: "#E0E0E0"      # Garis tepi pengganti shadow [cite: 2026-03-09]
+                
+                MDBoxLayout:
+                    orientation: "horizontal"
+                    adaptive_width: True
+                    spacing: dp(10)
+                    MDLabel:
+                        text: "Port Bluetooth:"
+                        theme_text_color: "Secondary"
+                        font_style: "Subtitle1"
+                        size_hint_x: None
+                        width: dp(120)
+                    Spinner:
+                        id: port_spinner
+                        text: "Pilih Port"
+                        values: []
+                        size_hint: None, None
+                        size: dp(140), dp(40)
+                        pos_hint: {"center_y": .5}
+                        background_normal: "" # Menghilangkan gradasi default spinner
+                        background_color: "#F5F5F5"
+                        color: 0, 0, 0, 1
+
+                MDRectangleFlatIconButton:
+                    icon: "refresh"
+                    text: "REFRESH"
+                    text_color: "#FFFFFF"
+                    md_bg_color: "#4471C4"
+                    line_color: "#4471C4"
+                    elevation: 0
+                    pos_hint: {"center_y": .5}
+                    on_release: root.refresh_ports()
+
+                MDRectangleFlatIconButton:
+                    id: btn_connect
+                    icon: "bluetooth-connect"
+                    text: "CONNECT"
+                    text_color: "#FFFFFF"
+                    md_bg_color: "#FF2A2A"
+                    line_color: "#FF2A2A"
+                    elevation: 0
+                    pos_hint: {"center_y": .5}
+                    on_release: root.toggle_connection()
+
+                Widget: # Spacer
+
+                MDLabel:
+                    id: lbl_conn_status
+                    text: "DISCONNECTED"
+                    text_color: "#2CA02C"
+                    halign: "right"
+                    valign: "middle"
+                    font_style: "H6"
+                    bold: True
+                    opacity: 1.0
+
+            # --- BOTTOM: SPLIT LAYOUT (MONITORING & CONTROL) ---
+            MDBoxLayout:
+                orientation: "horizontal"
+                spacing: dp(20)
+
+                # --- PANEL KIRI: MONITORING REAL-TIME ---
+                MDCard:
+                    orientation: "vertical"
+                    size_hint_x: 0.6
+                    md_bg_color: "#FFFFFF"
+                    padding: dp(20)
+                    spacing: dp(15)
+                    elevation: 0
+                    radius: [15, ]
+                    line_color: "#E0E0E0"
+
+                    MDLabel:
+                        text: "SENSOR REAL-TIME"
+                        theme_text_color: "Primary"
+                        font_style: "H4"
+                        bold: True
+                        size_hint_y: None
+                        height: dp(30)
+                    
+                    MDSeparator:
+                        color: "#EEEEEE"
+
+                    # Opasitas Besar
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: dp(120)
+                        MDLabel:
+                            id: lbl_opasitas
+                            text: "0.0%"
+                            halign: "center"
+                            font_style: "H1"
+                            theme_text_color: "Custom"
+                            text_color: "#2CA02C"
+                            bold: True
+                        MDLabel:
+                            text: "OPASITAS ASAP (%)"
+                            halign: "center"
+                            theme_text_color: "Secondary"
+                            font_style: "Subtitle1"
+
+                    # Grid Input Kalibrasi (Flat Style)
+                    MDGridLayout:
+                        cols: 3
+                        size_hint_y: None
+                        height: dp(100)
+                        spacing: dp(10)
+                        
+                        # Row 1: ADC Terang
+                        MDLabel:
+                            text: "ADC Terang (0%):"
+                            font_style: "H5"
+                        TextInput:
+                            id: ent_adc_terang
+                            text: "2786.4"
+                            multiline: False
+                            font_style: "H5"
+                            size_hint_y: None
+                            height: dp(35)
+                            background_normal: ""
+                            background_color: "#F5F5F5"
+                        MDRaisedButton:
+                            text: "UPDATE 0%"
+                            elevation: 0
+                            font_style: "H5"
+                            md_bg_color: "#4471C4"
+                            size_hint: 1, None
+                            height: dp(35)
+                            on_release: root.update_cal_terang()
+
+                        # Row 2: ADC Gelap
+                        MDLabel:
+                            text: "ADC Gelap (100%):"
+                            font_style: "H5"
+                        TextInput:
+                            id: ent_adc_gelap
+                            text: "2664.0"
+                            font_style: "H5"
+                            multiline: False
+                            size_hint_y: None
+                            height: dp(35)
+                            background_normal: ""
+                            background_color: "#F5F5F5"
+                        MDRaisedButton:
+                            text: "UPDATE 100%"
+                            font_style: "H5"
+                            elevation: 0
+                            md_bg_color: "#FF2A2A"
+                            size_hint: 1, None
+                            height: dp(35)
+                            on_release: root.update_cal_gelap()
+
+                    # Sensor Grid 2x2
+                    MDGridLayout:
+                        cols: 2
+                        spacing: dp(10)
+                        padding: [0, dp(10), 0, 0]
+                        
+                        # Suhu Gas
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            md_bg_color: "#F9F9F9"
+                            radius: [10, ]
+                            MDLabel:
+                                text: "GAS TEMP"
+                                font_style: "H5"
+                                halign: "center"
+                            MDLabel:
+                                id: lbl_gas
+                                text: "-- C"
+                                font_style: "H5"
+                                halign: "center"
+                                bold: True
+                        
+                        # Suhu Chamber
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            md_bg_color: "#F9F9F9"
+                            radius: [10, ]
+                            MDLabel:
+                                text: "CHAMBER TEMP"
+                                font_style: "H5"
+                                halign: "center"
+                            MDLabel:
+                                id: lbl_tabung
+                                text: "-- C"
+                                font_style: "H5"
+                                halign: "center"
+                                bold: True
+                        #Pressure
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            md_bg_color: "#F9F9F9"
+                            radius: [10, ]
+                            MDLabel:
+                                text: "PRESSURE RAW"
+                                font_style: "H5"
+                                halign: "center"
+                            MDLabel:
+                                id: lbl_pres     
+                                text: "--"
+                                font_style: "H5"
+                                halign: "center"
+                                bold: True   
+                        #adcraw
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            md_bg_color: "#F9F9F9"
+                            radius: [10, ]
+                            MDLabel:
+                                text: "ADC RAW (LIVE)"
+                                font_style: "H5"
+                                halign: "center"
+                            MDLabel:
+                                id: lbl_adc_raw   # <--- TAMBAHKAN ID INI JUGA
+                                text: "--"
+                                font_style: "H5"
+                                halign: "center"
+                                bold: True
+                        
+
+                # --- PANEL KANAN: SYSTEM CONTROL ---
+                MDCard:
+                    orientation: "vertical"
+                    size_hint_x: 0.4
+                    md_bg_color: "#FFFFFF"
+                    padding: dp(20)
+                    spacing: dp(15)
+                    elevation: 0
+                    radius: [15, ]
+                    line_color: "#E0E0E0"
+
+                    MDLabel:
+                        text: "CONTROL PANEL"
+                        theme_text_color: "Primary"
+                        font_style: "H4"
+                        bold: True
+                        size_hint_y: None
+                        height: dp(30)
+                    
+                    MDSeparator:
+
+                    MDRaisedButton:
+                        id: btn_auto_warm
+                        text: "AUTO WARMING UP (75°C - 90°C)"
+                        size_hint_x: 1
+                        height: dp(60)
+                        font_style: "H5"
+                        elevation: 0
+                        md_bg_color: "#EEEEEE"
+                        text_color: 0, 0, 0, 1
+                        on_release: root.toggle_auto_warming()
+
+                    # Container untuk List Aktuator (Tombol On/Off Manual)
+                    MDBoxLayout:
+                        id: actuator_list
+                        orientation: "vertical"
+                        font_style: "H5"
+                        adaptive_height: True
+                        spacing: dp(8)
+                    MDBoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(10)
+                        padding: [dp(5), 0, dp(5), dp(5)]
+
+                        MDLabel:
+                            text: "CAL-MODE"
+                            font_style: "Caption"
+                            size_hint_x: 0.2
+                            valign: "middle"
+
+                        # Saklar Kotak (Flat)
+                        CheckBox:
+                            id: sw_manipulasi
+                            active: False
+                            size_hint_x: None
+                            width: dp(30)
+                            color: [0.26, 0.44, 0.76, 1] if self.active else [0.7, 0.7, 0.7, 1]
+                            on_active: root.toggle_mode_manipulasi(self.active)
+
+                        # Input Putih, Teks Hitam, Tanpa Gradient/Shading
+                        TextInput:
+                            id: ent_target_dummy
+                            text: "20.0"
+                            disabled: not sw_manipulasi.active
+                            multiline: False
+                            size_hint_x: 0.3
+                            height: dp(30)
+                            pos_hint: {"center_y": .5}
+                            input_filter: 'float'
+                            cursor_color: [0, 0, 0, 1]
+                            foreground_color: [0, 0, 0, 1]
+                            background_normal: "" # Menghilangkan shading default
+                            background_color: [1, 1, 1, 1] if not self.disabled else [0.9, 0.9, 0.9, 1]
+                            padding: [dp(8), dp(4), dp(0), dp(0)]
+
+                        # Tombol TEST Kotak & Flat
+                        Button:
+                            id: btn_test_sim
+                            text: "TEST"
+                            disabled: not sw_manipulasi.active
+                            size_hint_x: 0.3
+                            height: dp(30)
+                            pos_hint: {"center_y": .5}
+                            background_normal: "" # Menghilangkan gradient/3D effect
+                            background_color: [0.26, 0.44, 0.76, 1] if not self.disabled else [0.8, 0.8, 0.8, 1]
+                            color: [1, 1, 1, 1]
+                            on_release: root.jalankan_test_manipulasi()
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(5)
+                    
+                    Widget: # Spacer
+
+                    MDRectangleFlatIconButton:
+                        icon: "arrow-left-bold"
+                        text: "KEMBALI"
+                        size_hint_x: 1
+                        height: dp(50)
+                        text_color: "#FFFFFF"
+                        md_bg_color: "#FF2A2A"
+                        line_color: "#FF2A2A"
+                        elevation: 0
+                        on_release: root.exec_navigate_main()
+
+        # === FOOTER LAYOUT ===
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: 0.1
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: 20
+                spacing: 20
+                md_bg_color: "#4471C4"
+                size_hint_x: 0.4
+                
+                AsyncImage:
+                    id: img_pemkab
+                    source:'assets/images/logo-sorong.png'
+                    size_hint_x: 0.1
+                    allow_stretch: True  
+
+                AsyncImage:
+                    id: img_dishub
+                    source:'assets/images/logo-dishub.png'
+                    size_hint_x: 0.1
+                    allow_stretch: True  
+
+                MDBoxLayout:
+                    orientation: "vertical"
+                    size_hint_x: 0.8
+
+                    MDLabel:
+                        id: lb_pemkab
+                        text: "PEMERINTAH KABUPATEN SORONG"
+                        halign: "left"
+                        valign: "middle"
+                        theme_text_color: "Custom"
+                        text_color: "#EEEEEE"                     
+                        font_style: 'Subtitle1'
+
+                    MDLabel:
+                        id: lb_dishub
+                        text: "DINAS PERHUBUNGAN"
+                        halign: "left"
+                        valign: "middle"
+                        theme_text_color: "Custom"
+                        text_color: "#EEEEEE"
+                        font_style: 'Subtitle1'
+
+                    MDLabel:
+                        id: lb_unit         
+                        text: "UNIT PELAKSANA UJI BERKALA KENDARAAN BERMOTOR"
+                        halign: "left"
+                        valign: "middle"
+                        theme_text_color: "Custom"
+                        text_color: "#EEEEEE"
+                        font_style: 'Subtitle1'
+
+                    MDLabel:
+                        id: lb_unit_address
+                        text: " Klamasen, Distrik Mariat, Kabupaten Sorong, Papua Barat Daya. 98416"
+                        halign: "left"
+                        valign: "middle"
+                        md_bg_color: "#EEEEEE"
+                        theme_text_color: "Custom"
+                        text_color: "#000000"
+                        font_style: 'Subtitle1'
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: 20
+                spacing: 20
+                md_bg_color: "#FFC000"
+                size_hint_x: 0.6
+
+                MDLabel:            
+                    text: "INFORMASI"
+                    halign: "left"
+                    valign: "middle"
+                    font_style: 'H5'
+
+                MDLabel:
+                    id: lb_info
+                    text: "Tekan Auto Warming Up untuk melakukan pemanasan secara otomatis dan suhu akan berada pada rentang 70-90 derajat"
+                    halign: "left"
+                    valign: "middle"
+                    font_style: 'H6'

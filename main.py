@@ -52,7 +52,8 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.button import MDRaisedButton
 from kivy.properties import NumericProperty, ListProperty, StringProperty, BooleanProperty
 from kivymd.uix.button import MDFillRoundFlatButton
-import bcrypt 
+import bcrypt
+from fpdf import FPDF
 
 dt_id_user = 0
 dt_user = ""
@@ -86,10 +87,10 @@ LB_UNIT_ADDRESS = config['app']['LB_UNIT_ADDRESS']
 
 # SQL setting
 DB_HOST = "187.77.112.162"
-DB_USER = "Pndujikir2026!"  
-DB_PASSWORD = "@PndKir2026!"
-
+DB_USER = "IntegrasiPnd@"
+DB_PASSWORD = "@PndIntegrated26"
 DB_NAME = "pkbpandeglang"
+
 TB_DATA = "tb_cekident"
 TB_USER = "users"
 TB_MERK = "merk"
@@ -235,17 +236,17 @@ class ScreenLogin(MDScreen):
             
             mycursor = mydb.cursor()
             
-            # 1. Ambil ID, Name, dan Password (untuk diverifikasi bcrypt)
+            # 1. Ambil ID Sumber, Name, dan Password (untuk diverifikasi bcrypt)
             # Pastikan kolom 'tipe_user' namanya sudah sesuai dengan di DB
-            query = f"SELECT id, name, email, password FROM {TB_WEB_USER} WHERE email = %s AND tipe_user = '2'"
-            
+            query = f"SELECT id_sumber, name, email, password FROM {TB_WEB_USER} WHERE email = %s AND tipe_user = '2'"
+
             mycursor.execute(query, (input_email,))
             myresult = mycursor.fetchone()
-            
+
             if myresult:
                 db_id = myresult[0]
                 db_name = myresult[1]
-                db_hashed_password = myresult[3] 
+                db_hashed_password = myresult[3]
 
                 # 2. Verifikasi Password
                 import bcrypt # Sebaiknya pindahkan ke baris paling atas file script Anda
@@ -371,9 +372,10 @@ class ScreenMain(MDScreen):
     def exec_reload_database(self):
         global mydb
         try:
-            mydb = mysql.connector.connect(host = DB_HOST,user = DB_USER,password = DB_PASSWORD, database = DB_NAME)
+            mydb = mysql.connector.connect(host = DB_HOST,user = DB_USER,password = DB_PASSWORD, database = DB_NAME, use_pure = True)
         except Exception as e:
             toast('Gagal Menginisiasi Database')
+            Logger.error(f"{self.name}: Gagal Menginisiasi Database, {e}")
 
     def exec_reload_table(self):
         """Reload tabel antrian khusus fokus pada Smoke (Solar)."""
@@ -748,13 +750,121 @@ class Screensmoketest(MDScreen):
             
             cursor.execute(sql, val)
             mydb.commit()
-            
+
             toast(f"Data Berhasil Disimpan oleh ID: {dt_id_user}")
+            self.exec_print_pdf()
             self.exec_navigate_main()
-            
+
         except Exception as e:
             Logger.error(f"Save Error: {e}")
             toast("Gagal menyimpan ke Database!")
+
+    def exec_print_pdf(self):
+        """Cetak hasil uji opasitas asap diesel ke PDF."""
+        global dt_no_antri, dt_no_pol, dt_no_uji, dt_sts_uji, dt_merk, dt_type
+        global dt_jns_kend, dt_jbb, dt_brt_ksg, dt_bhn_bkr, dt_warna, dt_thn_buat
+        global dt_user, db_merk, db_warna
+
+        try:
+            print_datetime = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
+
+            try:
+                merk_row = db_merk[db_merk[:, 0] == dt_merk]
+                merk_text = merk_row[0, 1] if merk_row.size > 0 else str(dt_merk)
+            except Exception:
+                merk_text = str(dt_merk)
+
+            try:
+                warna_row = db_warna[db_warna[:, 0] == dt_warna]
+                warna_text = warna_row[0, 1] if warna_row.size > 0 else str(dt_warna)
+            except Exception:
+                warna_text = str(dt_warna)
+
+            bahan_bakar_text = "Solar" if dt_bhn_bkr == 'S' else dt_bhn_bkr
+            sts_uji_map = {'B': 'Berkala', 'U': 'Uji Ulang', 'BR': 'Baru', 'NB': 'Numpang Uji'}
+            sts_uji_text = sts_uji_map.get(dt_sts_uji, 'Mutasi')
+            k_text = self.ids.lbl_hasil_k.text if 'lbl_hasil_k' in self.ids else "0.00"
+
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_xy(0, 2)
+            pdf.image(f"assets/images/{IMG_LOGO_DISHUB}", w=30.0, h=0, x=20)
+            pdf.set_xy(0, 2)
+            pdf.image(f"assets/images/{IMG_LOGO_PEMKAB}", w=30.0, h=0, x=180)
+            pdf.set_font('Arial', 'B', 24.0)
+            pdf.cell(ln=1, h=5.0, w=0)
+            pdf.cell(ln=1, h=15.0, align='C', w=0, txt=LB_DISHUB, border=0)
+            pdf.cell(ln=1, h=15.0, align='C', w=0, txt=LB_UNIT, border=0)
+            pdf.cell(ln=1, h=5.0, w=0)
+
+            # Blok Info Kendaraan
+            pdf.set_font('Arial', 'B', 14.0)
+            pdf.cell(ln=0, h=10.0, align='L', w=0, txt=f"Tanggal: {print_datetime}", border=0)
+            pdf.cell(ln=1, h=10.0, align='R', w=0, txt=f"No Reg Kend: {dt_no_pol}", border=0)
+            pdf.cell(ln=0, h=10.0, align='L', w=0, txt=f"No Antrian: {dt_no_antri}", border=0)
+            pdf.cell(ln=1, h=10.0, align='R', w=0, txt=f"No Uji: {dt_no_uji}", border=0)
+            pdf.cell(ln=1, h=10.0, align='L', w=0, txt=f"Jenis Pengujian: {sts_uji_text}", border=0)
+            pdf.cell(ln=1, h=10.0, align='L', w=0, txt=f"Jenis Kendaraan: {dt_jns_kend}", border=0)
+            pdf.cell(ln=0, h=10.0, align='L', w=0, txt=f"Merk/Type: {merk_text} / {dt_type}", border=0)
+            pdf.cell(ln=1, h=10.0, align='R', w=0, txt=f"Warna: {warna_text}", border=0)
+            pdf.cell(ln=0, h=10.0, align='L', w=0, txt=f"JBB: {dt_jbb}", border=0)
+            pdf.cell(ln=1, h=10.0, align='R', w=0, txt=f"Berat Kosong: {dt_brt_ksg}", border=0)
+            pdf.cell(ln=1, h=10.0, align='L', w=0, txt=f"Bahan Bakar: {bahan_bakar_text}  |  Thn Buat: {dt_thn_buat}", border=0)
+            pdf.cell(ln=1, h=5.0, w=0)
+
+            # Section Tabel: DIESEL SMOKE OPACITY (mengikuti pola tabel AXLE LOAD/REM)
+            pdf.set_font('Arial', 'B', 14.0)
+            pdf.cell(ln=1, h=8.0, align='L', w=0, txt="DIESEL SMOKE OPACITY", border=0)
+
+            col_no, col_val = 40, 60
+            pdf.set_font('Arial', 'B', 11.0)
+            pdf.cell(ln=0, h=7.0, align='C', w=col_no, txt="Percobaan", border=1)
+            pdf.cell(ln=1, h=7.0, align='C', w=col_val, txt="Nilai Opasitas", border=1)
+
+            pdf.set_font('Arial', '', 11.0)
+            list_peak = getattr(self, 'list_peak', []) or []
+            for idx, val in enumerate(list_peak, start=1):
+                pdf.cell(ln=0, h=7.0, align='C', w=col_no, txt=f"Percobaan {idx}", border=1)
+                pdf.cell(ln=1, h=7.0, align='C', w=col_val, txt=f"{val:.1f} %", border=1)
+
+            pdf.set_font('Arial', 'B', 11.0)
+            pdf.cell(ln=0, h=7.0, align='C', w=col_no, txt="Rata-rata", border=1)
+            pdf.cell(ln=1, h=7.0, align='C', w=col_val, txt=f"{self.avg_final_val} %", border=1)
+            pdf.cell(ln=1, h=3.0, w=0)
+
+            pdf.set_font('Arial', '', 12.0)
+            pdf.cell(ln=1, h=8.0, align='L', w=0, txt=f"Koefisien (m-1) : {k_text}", border=0)
+            pdf.cell(ln=1, h=8.0, align='L', w=0, txt=f"Petugas : {dt_user}", border=0)
+            pdf.set_font('Arial', 'B', 12.0)
+            pdf.cell(ln=1, h=8.0, align='L', w=0, txt=f"Status Pengujian : {self.hasil_uji}", border=0)
+            pdf.cell(ln=1, h=6.0, w=0)
+
+            # Resume Akhir (mengikuti pola "Resume Hasil Pengujian" pada laporan)
+            pdf.set_font('Arial', '', 14.0)
+            pdf.cell(ln=1, h=10.0, align='C', w=0, txt="Resume Hasil Pengujian", border=0)
+            pdf.set_font('Arial', 'B', 24.0)
+            pdf.cell(ln=1, h=15.0, align='C', w=0, txt=self.hasil_uji, border=0)
+
+            documents_dir = os.path.join(os.environ["USERPROFILE"], "Documents")
+
+            folder_name = f"Hasil_Uji_VIIMS_Diesel_Opacity_{time.strftime('%Y-%m-%d', time.localtime())}"
+            date_folder_path = os.path.join(documents_dir, folder_name)
+
+            if not os.path.exists(date_folder_path):
+                os.makedirs(date_folder_path)
+
+            pdf_filename = f"Hasil_Uji_No_{dt_no_antri}.pdf"
+            pdf_path = os.path.join(date_folder_path, pdf_filename)
+
+            pdf.output(pdf_path, 'F')
+            toast(f"PDF tersimpan: {pdf_path}")
+            os.startfile(pdf_path)
+            Logger.info(f"{self.name}: PRINT_PDF_DIESEL antrian={dt_no_antri} nopol={dt_no_pol} path={pdf_path}")
+
+        except Exception as e:
+            toast_msg = 'Gagal menyimpan ke PDF'
+            toast(toast_msg)
+            Logger.error(f"{self.name}: {toast_msg}, {e}")
 
     def exec_navigate_main(self):
         self.manager.current = 'screen_main'
@@ -1188,7 +1298,7 @@ class DieselsmokemeterApp(MDApp):
         self.theme_cls.primary_palette = "Gray"
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.theme_style = "Light"
-        self.icon = 'assets/images/logo-load-app.png'
+        self.icon = 'assets/images/logo-emission-app.png'
         Config.set('kivy', 'exit_on_escape', '1')
         window_size_y = Window.size[0]
         window_size_x = Window.size[1]
