@@ -583,15 +583,15 @@ class Screensmoketest(MDScreen):
     def check_temp_status(self, dt):
         app = MDApp.get_running_app()
         cal_screen = self.manager.get_screen('screen_Calibration')
-        
+
         # PERBAIKAN 1: Suhu tetap diupdate meskipun mode simulasi AKTIF
         self.suhu_saat_ini = float(app.latest_data[1])
-        
+
         if not cal_screen.mode_simulasi:
             self.opasitas_saat_ini = float(app.latest_data[3])
-        
-        # Logika tombol start (Range suhu 10-90 C)
-        if 0 <= self.suhu_saat_ini <= 0:
+
+        # Logika tombol start (Range suhu 75-90 C)
+        if 75 <= self.suhu_saat_ini <= 90:
             self.ids.btn_start.disabled = False
         else:
             if self.status_teks == "READY":
