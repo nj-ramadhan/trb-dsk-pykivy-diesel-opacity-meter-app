@@ -1,6 +1,6 @@
 import cmd
 import datetime
-import os, sys, time
+import os, sys, time, shutil
 import ssl
 import random
 import math
@@ -71,7 +71,18 @@ colors = {
 }
 
 config_name = 'config.ini'
-config_full_path = os.path.join(application_path, config_name)
+# Template config shipped next to the executable (install folder, e.g. Program Files).
+# That folder is not writable by a standard user at runtime, so any config value the
+# app updates while running (calibration ADC values, etc.) must live somewhere else.
+default_config_path = os.path.join(application_path, config_name)
+
+user_data_dir = os.path.join(os.getenv('LOCALAPPDATA') or os.path.expanduser('~'), 'VIIMS-DieselOpacityMeter')
+os.makedirs(user_data_dir, exist_ok=True)
+config_full_path = os.path.join(user_data_dir, config_name)
+
+if not os.path.exists(config_full_path) and os.path.exists(default_config_path):
+    shutil.copyfile(default_config_path, config_full_path)
+
 config = configparser.ConfigParser()
 config.read(config_full_path)
 
@@ -590,8 +601,8 @@ class Screensmoketest(MDScreen):
         if not cal_screen.mode_simulasi:
             self.opasitas_saat_ini = float(app.latest_data[3])
 
-        # Logika tombol start (Range suhu 75-90 C)
-        if 75 <= self.suhu_saat_ini <= 90:
+        # Logika tombol start (Range suhu 70-90 C)
+        if 70 <= self.suhu_saat_ini <= 90:
             self.ids.btn_start.disabled = False
         else:
             if self.status_teks == "READY":
@@ -1149,9 +1160,9 @@ class ScreenCalibration(MDScreen):
                     self.send("SR0")
                     self.update_btn_ui("HEATER (PWM 60)", "OFF")
                     self.ids.btn_auto_warm.md_bg_color = [0.17, 0.8, 0.25, 1]
-                    self.ids.btn_auto_warm.text = "SUHU TERJAGA (75-90°C) - SIAP UJI"
+                    self.ids.btn_auto_warm.text = "SUHU TERJAGA (70-90°C) - SIAP UJI"
 
-                elif chamber_temp <= 75.0 and not self.heater_is_on:
+                elif chamber_temp <= 70.0 and not self.heater_is_on:
                     self.heater_is_on = True
                     self.send("SR1")
                     self.update_btn_ui("HEATER (PWM 60)", "ON")
@@ -1180,7 +1191,7 @@ class ScreenCalibration(MDScreen):
             app.heater_is_on = False
             self.send("SR0")
             self.ids.btn_auto_warm.md_bg_color = [0.9, 0.9, 0.9, 1]
-            self.ids.btn_auto_warm.text = "AUTO WARMING UP (75°C - 90°C)"
+            self.ids.btn_auto_warm.text = "AUTO WARMING UP (70°C - 90°C)"
 
     def build_actuator_buttons(self):
         if 'actuator_list' not in self.ids: return
@@ -1254,22 +1265,28 @@ class ScreenCalibration(MDScreen):
     def update_cal_terang(self):
         val = self.ids.ent_adc_terang.text
         if self.send(f"CAL_T:{val}"):
-            # Simpan ke memori config saat ini
-            config['app']['ADC_TERANG'] = str(val)
-            # Tulis secara fisik ke file config.ini
-            with open(config_full_path, 'w') as configfile:
-                config.write(configfile)
-            toast(f"Baseline 0% disimpan ke Config: {val}")
+            try:
+                # Simpan ke memori config saat ini
+                config['app']['ADC_TERANG'] = str(val)
+                # Tulis secara fisik ke file config.ini
+                with open(config_full_path, 'w') as configfile:
+                    config.write(configfile)
+                toast(f"Baseline 0% disimpan ke Config: {val}")
+            except Exception as e:
+                toast(f"Gagal simpan config: {e}")
 
     def update_cal_gelap(self):
         val = self.ids.ent_adc_gelap.text
         if self.send(f"CAL_G:{val}"):
-            # Simpan ke memori config saat ini
-            config['app']['ADC_GELAP'] = str(val)
-            # Tulis secara fisik ke file config.ini
-            with open(config_full_path, 'w') as configfile:
-                config.write(configfile)
-            toast(f"Baseline 100% disimpan ke Config: {val}")
+            try:
+                # Simpan ke memori config saat ini
+                config['app']['ADC_GELAP'] = str(val)
+                # Tulis secara fisik ke file config.ini
+                with open(config_full_path, 'w') as configfile:
+                    config.write(configfile)
+                toast(f"Baseline 100% disimpan ke Config: {val}")
+            except Exception as e:
+                toast(f"Gagal simpan config: {e}")
 
     def exec_navigate_main(self):
         self.manager.current = 'screen_main'
@@ -1379,7 +1396,7 @@ class DieselsmokemeterApp(MDApp):
                             if suhu_tabung >= 90.0 and self.heater_is_on:
                                 self.heater_is_on = False
                                 self.send_command("SR0")
-                            elif suhu_tabung <= 75.0 and not self.heater_is_on:
+                            elif suhu_tabung <= 70.0 and not self.heater_is_on:
                                 self.heater_is_on = True
                                 self.send_command("SR1")
                         

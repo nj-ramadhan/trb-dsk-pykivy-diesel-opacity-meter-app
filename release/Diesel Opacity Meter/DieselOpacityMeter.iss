@@ -3,7 +3,7 @@
 ; works regardless of which machine/drive the repo is checked out on.
 
 #define MyAppName "VIIMS - Diesel Smoke Opacity Meter Application"
-#define MyAppVersion "1.0.260728"
+#define MyAppVersion "1.0.260728.1"
 #define MyAppPublisher "PT. Tiga Ratu Berkarya"
 #define MyAppExeName "TRB-VIIMS-DieselOpacityMeterApp.exe"
 #define MyAppAssocName "VIIMS - Diesel Smoke Opacity Meter Application Files"
